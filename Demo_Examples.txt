@@ -1,0 +1,50 @@
+﻿ #
+ #   Run this SQL query to start identifying the versions of Java.
+ #
+
+select Distinct 
+ARP.DisplayName0,arp.Version0,arp.Publisher0, counT(arp.Version0) AS InstanceCount
+from v_Add_Remove_Programs ARP 
+inner join v_r_system sys on ARP.ResourceID=SYS.ResourceID
+left outer join v_R_User u on sys.User_Name0=u.User_Name0
+where 
+(ARP.DisplayName0 like '%java % Update %' OR ARP.DisplayName0 like '%java(tm) % Update %')
+
+GROUP BY ARP.DisplayName0,arp.Version0,arp.Publisher0
+
+#View our custom class
+Get-WmiObject -class CM_JavaUsageTracking
+
+#Delete our custom class
+Remove-WmiObject -class CM_JavaUsageTracking
+
+
+
+::script to create DeploymentRuleset.jar
+PUSHD c:\temp
+
+"C:\Program Files (x86)\Java\jdk1.8.0_31\bin\jar.exe" -cvf DeploymentRuleSet.jar ruleset.xml
+::"C:\Program Files (x86)\Java\jdk1.8.0_31\bin\jarsigner.exe" -verbose -keystore "C:\Program Files (x86)\Java\jdk1.8.0_31\bin\keystore.jks" -storepass DemoMe -signedjar DeploymentRuleSet.jar DeploymentRuleSet.jar <cert sig here> -keypass javaDemo
+"C:\Program Files (x86)\Java\jdk1.8.0_31\bin\jarsigner.exe" -verbose -keystore "C:\temp\javawhitelist.jks" -storepass DemoMe -signedjar DeploymentRuleSet.jar DeploymentRuleSet.jar c -keypass DemoMe -tsa http://timestamp.digicert.com
+
+::copy DeploymentRuleSet.jar C:\windows\Sun\java\deployment /Y
+"C:\Program Files\WinZip\wzzip.exe" java.zip DeploymentRuleSet.jar
+"C:\Program Files\WinZip\wzzip.exe" -a java.zip readme.txt
+POPD
+
+Building a RuleSet.xml
+
+[xml]$xmldoc = Get-Content "c:\temp\ruleset.xml"
+
+  $child = $xmldoc.CreateElement("rule")
+  $xmldoc.ruleset.AppendChild($child)
+
+  $childid = $xmldoc.CreateElement("id")
+  $childid.SetAttribute("location", "http://www.java.com")
+  $child.AppendChild($childid)
+
+  $childaction = $xmldoc.CreateElement("action")
+  $childaction.SetAttribute("permission", "run")
+  $Child.AppendChild($childaction)
+
+$xmldoc.save("c:\temp\ruleset.xml")
