@@ -1,3 +1,6 @@
+#this is the script file used in the Java Usage Tracking.cab.  
+#This only for reference and is not needed otherwise.  This script is included in the .cab file.
+
 $LogFile = (Get-ItemProperty -Path "HKLM:\Software\Microsoft\SMS\Client\Configuration\Client Properties" -Name "Local SMS Path").'Local SMS Path' + "Logs\CM_JavaUsageLogging.log"
 $LoggingEnable = $True
 $UTLogFileName = ".java_usage_cm"
@@ -29,7 +32,7 @@ $UtcOffset = $UtcValue.Substring(21, $UtcValue.Length - 21)
  
 #Create the line to be logged 
 $LogLine =  "<![LOG[$Value]LOG]!>" +`
-            "<time=`"$(Get-Date -Format HH:mm:ss.fff)$($UtcOffset)`" " +` 
+            "<time=`"$(Get-Date -Format HH:mm:ss.fff)$($UtcOffset)`" " +`
             "date=`"$(Get-Date -Format M-d-yyyy)`" " +`
             "component=`"Java Compliance`" " +`
             "context=`"$([System.Security.Principal.WindowsIdentity]::GetCurrent().Name)`" " +`
