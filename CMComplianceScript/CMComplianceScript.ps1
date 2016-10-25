@@ -124,22 +124,29 @@ $DataSet = @()
 $JREPaths = @("C:\Program Files (x86)\Java\jre7")
 
 #Enable Java logging by enumerating the JREs from the registry
-$Keys = Get-ChildItem "HKLM:\Software\WOW6432Node\JavaSoft\Java Runtime Environment"
-$JREs = $Keys | Foreach-Object {Get-ItemProperty $_.PsPath }
-ForEach ($JRE in $JREs) {
-    IF ($LoggingEnable -eq $true) {Log-ScriptEvent -Value "Interogating JRE path $($JRE.JavaHome)" -Severity 1}
-    $JREPath = test-path "$($JRE.JavaHome)\lib\management"
-    if ($JREPath) {
-        $UTProps = test-path "$($JRE.JavaHome)\lib\management\usagetracker.properties"
-        if (-Not $UTProps) {
-            IF ($LoggingEnable -eq $true) {Log-ScriptEvent -Value "Creating $($JRE.JavaHome)\lib\management\usagetracker.properties" -Severity 1}
-            Create-UsageTrackingProps -UTPath "$($JRE.JavaHome)\lib\management\usagetracker.properties"
-        } Else {
-            IF ($LoggingEnable -eq $true) {Log-ScriptEvent -Value "$($JRE.JavaHome)\lib\management\usagetracker.properties exists" -Severity 1}
+#32 bit instances of Java on a 64 bit machine.
+$JREPaths = "HKLM:\Software\WOW6432Node\JavaSoft\Java Runtime Environment","HKLM:\Software\JavaSoft\Java Runtime Environment"
+$JREPaths | ForEach-Object {
+     if(Test-Path $PSItem)
+    {
+        $Keys = Get-ChildItem $PSItem
+        $JREs = $Keys | Foreach-Object {Get-ItemProperty $_.PsPath }
+        ForEach ($JRE in $JREs) 
+        {
+            IF ($LoggingEnable -eq $true) {Log-ScriptEvent -Value "Interogating JRE path $($JRE.JavaHome)" -Severity 1}
+            $JREPath = test-path "$($JRE.JavaHome)\lib\management"
+            if ($JREPath) {
+                $UTProps = test-path "$($JRE.JavaHome)\lib\management\usagetracker.properties"
+                if (-Not $UTProps) {
+                    IF ($LoggingEnable -eq $true) {Log-ScriptEvent -Value "Creating $($JRE.JavaHome)\lib\management\usagetracker.properties" -Severity 1}
+                    Create-UsageTrackingProps -UTPath "$($JRE.JavaHome)\lib\management\usagetracker.properties"
+                } Else {
+                    IF ($LoggingEnable -eq $true) {Log-ScriptEvent -Value "$($JRE.JavaHome)\lib\management\usagetracker.properties exists" -Severity 1}
+                }
+            }
         }
     }
 }
-
 #Enumerate user profile folders from WMI
 Try {
     IF ($LoggingEnable -eq $true) {Log-ScriptEvent -Value "Gather user profile paths." -Severity 1}
